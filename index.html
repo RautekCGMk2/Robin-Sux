@@ -3,6 +3,7 @@
   <head>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
     <script src="https://code.jquery.com/color/jquery.color-2.1.2.min.js"></script>
+    <script src="http://canvasjs.com/assets/script/canvasjs.min.js"></script>
 
     <style>
       body{
@@ -62,6 +63,12 @@
     var device_id = "54ff6e066672524850221267";
     var access_token = "47d30436af2fd5a1f77e3dbdbd00082f5b0b2433";
 
+    var temperatureData = [];
+
+    var chartX = 0;
+    var dataLength = 30;
+    var updateInterval = 1000;
+
     /**
      * Generate an access URL based off the path
      */
@@ -94,6 +101,43 @@
 
     $(document).ready(function(){
 
+      function updateChart() {
+        console.log("Updating Chart");
+        sendGetRequest("temperature", function(data, status){
+            console.log(data);
+            temp = data.result * 0.041316 - 25.641;
+            if(status == "success"){
+                temperatureData.push({
+                    x: chartX,
+                    y: temp
+                });
+                chartX++;
+            }
+            //updateChart regularly
+            setTimeout(function(){updateChart()}, updateInterval);
+
+            chart.render();
+        }, function(data){
+            console.log("Device offline");
+            setOutputBox("Device offline.", "#cc0000");
+            offline.play();
+        });
+        
+        if (temperatureData.length > dataLength) {
+            temperatureData.shift();
+        }
+      }
+
+      var chart = new CanvasJS.Chart("chartContainer", {
+        title: {
+            text: "Temperature Data"
+        },
+        data: [{
+            type: "line",
+            dataPoints: temperatureData
+        }]
+      });
+
       var eventSource = new EventSource(generateURL("events/"));
 
       eventSource.addEventListener('open', function(e){
@@ -118,7 +162,9 @@
         console.log(data);
         if(status == "success"){
           console.log("Device online");
-          setOutputBox("Device online.", "#74B135");}
+          setOutputBox("Device online.", "#74B135");
+          // start collecting temp data
+          updateChart();}
       }, function(data){
           console.log("Device offline");
           setOutputBox("Device offline.", "#cc0000");
@@ -198,6 +244,8 @@
     <div id="outputBox">
       Connecting...
     </div>
+
+    <div id="chartContainer" style="height: 300px; width:100%;"></div>
 
     </center>
 
