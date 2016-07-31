@@ -1,0 +1,212 @@
+<!DOCTYPE>
+<html>
+  <head>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+    <script src="https://code.jquery.com/color/jquery.color-2.1.2.min.js"></script>
+
+    <style>
+      body{
+      }
+
+      h1{
+        color: #0b2028;
+        font-family: helvetica;
+      }
+
+      #outputBox{
+        background-color: yellow;
+        padding:  5px;
+        max-width: 50%;
+        margin: 20px;
+        box-shadow: 1px 1px, 2px 2px 3px grey;
+      }
+
+      #outputBox:first-letter{
+        text-transform: capitalize;
+      }
+
+      button{
+        background-color: white;
+        border-color: #74B135;
+        border-width: 2px;
+        width: 125px;
+        height: 25px;
+        margin-top: 5px;
+        box-shadow: 1px 1px, 2px 2px 3px grey;
+      }
+
+      button:hover{
+        color: darkblue;
+      }
+
+      #box{
+        position: absolute;
+        top: 100px;
+        left: 20px;
+        border: 5px;
+        float: left;
+        background-color: red;
+        height: 20px;
+        width: 20px;
+      }
+
+    </style>
+
+    <script>
+
+    var particleVariable;   //String used to build the api call. Not used...
+    var particleData;       //JSON object from particle cloud.
+    var name;               //Name returned from variable call.
+    var value = 0;          //Value extracted from JSON.
+    
+    var device_id = "54ff6e066672524850221267";
+    var access_token = "47d30436af2fd5a1f77e3dbdbd00082f5b0b2433";
+
+    /**
+     * Generate an access URL based off the path
+     */
+    function generateURL(path) {
+        return "https://api.particle.io/v1/devices/" + device_id+ "/" + path + "?access_token=" + access_token;
+    }
+    
+    function setOutputBox(content, color) {
+        $("#outputBox").text(content).animate({backgroundColor: color}, 1500);
+    }
+
+    var error = function(){
+       setOutputBox("Cannot connect.", "cc0000");
+       deny.play();
+    }
+
+    function sendGetRequest(name, successFunc, failFunc) {
+        if (failFunc == null) {
+            failFunc = error;
+        }
+        $.get(generateURL(name), successFunc).fail(failFunc);
+    }
+
+    function sendPostRequest(name, data, successFunc, failFunc) {
+        if (failFunc == null) {
+            failFunc = error;
+        }
+        $.post(generateURL(name), data, successFunc, "text").fail(failFunc);
+    }
+
+    $(document).ready(function(){
+
+      var eventSource = new EventSource(generateURL("events/"));
+
+      eventSource.addEventListener('open', function(e){
+        console.log("Opened event listener successfully.");
+      }, false);
+
+      eventSource.addEventListener('error', function(e){
+        console.log("Event listener error.");
+        setOutputBox("Error.", "#74B135");
+      }, false);
+
+      //Listen for device online status event.
+      eventSource.addEventListener('status', function(e){
+        console.log(e.data);
+        if(e.data == "online"){
+          setOutputBox("Device online.", "#74B135");
+        }
+      }, false);
+
+      //Check temperature variable to see if device is online.
+      sendGetRequest("temperature", function(data, status){
+        console.log(data);
+        if(status == "success"){
+          console.log("Device online");
+          setOutputBox("Device online.", "#74B135");}
+      }, function(data){
+          console.log("Device offline");
+          setOutputBox("Device offline.", "#cc0000");
+          offline.play();
+      });
+
+      //Device button press event.
+      eventSource.addEventListener('btnState', function(e){
+        console.log("Button value change.");
+        
+        parsedData = JSON.parse(e.data);
+
+        if(parsedData.data == "yes"){
+          $("#box").animate({backgroundColor: "#74B135"}, 10);
+          //btnOn.play();
+        }
+        else{
+          $("#box").animate({backgroundColor: "#cc0000"}, 10);
+          //btnOff.play();
+        }
+      });
+
+
+      $("#ledON").click(function(){
+        sendPostRequest("led", {value: "on"}, function(data){
+           console.log("LED Set");
+           particleData = JSON.parse(data);
+
+           if(particleData.return_value == 1)
+             setOutputBox("LED is now on.");
+        });
+        click.play();
+      });
+
+      $("#ledOFF").click(function(){
+        sendPostRequest("led", {value: "off"}, function(data){
+           console.log("LED Set");
+           particleData = JSON.parse(data);
+
+          if(particleData.return_value == 0)
+            setOutputBox("LED is now off.");
+        });
+        click.play();
+      });
+
+      $("#getTemp").click(function(){
+
+        console.log("Getting temperature...");
+
+        sendGetRequest("temperature", function(data, status){
+          console.log(data);
+
+          temperature = data.result * 0.041316 - 25.641;
+
+          if(status == "success")
+            setOutputBox(data.name + " is " + Math.round(temperature) + " degrees Celsius");
+          else
+            error();
+        });
+        click.play();
+      });
+
+    });
+
+    </script>
+  </head>
+  <body>
+    <center>
+
+    <h1>WEB CONTROLLED LED TEST</h1>
+    <br>
+    <button id="ledON">LED On</button>
+    <button id="ledOFF">LED Off</button>
+    <button id="getTemp">Get Temperature</button>
+
+    <br>
+    <div id="outputBox">
+      Connecting...
+    </div>
+
+    </center>
+
+    <div id="box"></div>
+    <audio id="deny" src="http://puu.sh/qjxFG/76356cbea2.wav" preload="auto"></audio>
+    <audio id="click" src="http://puu.sh/qjxHb/b237c5a80b.wav" preload="auto"></audio>
+    <audio id="offline" src="http://puu.sh/qk8jk/ab6f10e45a.mp3" preload="auto"></audio>
+    <audio id="btnOn" src="http://puu.sh/qk2fo/c982553a81.wav" preload="auto"></audio>
+    <audio id="btnOff" src="http://puu.sh/qk2hb/e6bbca8bde.wav" preload="auto"></audio>
+
+  </body>
+</html>
