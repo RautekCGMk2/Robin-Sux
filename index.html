@@ -67,7 +67,7 @@
     var temperatureData = [];
 
     var chartX = 0;
-    var dataLength = 30;
+    var dataLength = 120;
     var updateInterval = 1000;
 
     /**
@@ -103,7 +103,7 @@
     $(document).ready(function(){
 
       function updateChart() {
-        console.log("Updating Chart");
+        //console.log("Updating Chart");
         sendGetRequest("temperature", function(data, status){
             console.log(data);
             temp = data.result * 0.041316 - 25.641;
