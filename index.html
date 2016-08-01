@@ -67,8 +67,13 @@
     var temperatureData = [];
 
     var chartX = 0;
+<<<<<<< HEAD
     var dataLength = 30;
     var updateInterval = 500;
+=======
+    var dataLength = 120;
+    var updateInterval = 1000;
+>>>>>>> origin/master
 
     /**
      * Generate an access URL based off the path
@@ -103,7 +108,7 @@
     $(document).ready(function(){
 
       function updateChart() {
-        console.log("Updating Chart");
+        //console.log("Updating Chart");
         sendGetRequest("temperature", function(data, status){
             //console.log(data);
             temp = data.result * 0.041316 - 25.641;
