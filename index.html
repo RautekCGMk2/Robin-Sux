@@ -68,7 +68,7 @@
 
     var chartX = 0;
     var dataLength = 30;
-    var updateInterval = 1000;
+    var updateInterval = 500;
 
     /**
      * Generate an access URL based off the path
@@ -105,7 +105,7 @@
       function updateChart() {
         console.log("Updating Chart");
         sendGetRequest("temperature", function(data, status){
-            console.log(data);
+            //console.log(data);
             temp = data.result * 0.041316 - 25.641;
             if(status == "success"){
                 temperatureData.push({
@@ -180,11 +180,11 @@
 
         if(parsedData.data == "yes"){
           $("#box").animate({backgroundColor: "#74B135"}, 10);
-          //btnOn.play();
+          btnOn.play();
         }
         else{
           $("#box").animate({backgroundColor: "#cc0000"}, 10);
-          //btnOff.play();
+          btnOff.play();
         }
       });
 
